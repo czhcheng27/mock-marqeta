@@ -1,0 +1,1 @@
+export const textArray = ['credit', 'payroll', 'lending', 'expense', 'embedded finance'];

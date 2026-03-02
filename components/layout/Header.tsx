@@ -1,4 +1,5 @@
 import Image from "next/image";
+import AppButton from "@/components/ui/AppButton";
 
 type Props = {};
 
@@ -48,18 +49,12 @@ const Header = (props: Props) => {
             </div>
           </div>
           <div className="items-center gap-2 hidden md:flex">
-            <a
-              href=""
-              className="link Inherit font-medium transition flex items-center px-4.25 py-0 text-sm rounded-lg leading-8! text-[#2a206a]"
-            >
+            <AppButton href="" variant="ghost" className="text-sm rounded-lg py-0 leading-8">
               Sign in
-            </a>
-            <a
-              href=""
-              className="transition items-center w-auto inline-flex justify-center text-center rounded-[10px] text-base font-medium bg-[#03bf99]  hover:bg-[#00e4b4] text-[#2a206a] hover:text-[#2a206a] px-4.25 py-2.25 tracking-[0px] leading-6!"
-            >
+            </AppButton>
+            <AppButton href="" variant="filled">
               Contact us
-            </a>
+            </AppButton>
           </div>
         </nav>
       </div>
