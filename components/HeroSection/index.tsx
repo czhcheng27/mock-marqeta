@@ -1,17 +1,22 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/all";
-import { textArray } from "./data";
+import { useGSAP } from "@gsap/react";
+import { HeroLogo, textArray } from "./data";
 import { DesktopGrid, DesktopGridLess } from "./DesktopGrid";
+import { HomepageMobileGrid, MobileGrid } from "./MobileGrid";
 import {
   LaptopBreakPoint,
   TabletBreakPoint,
   MobileBreakPoint,
 } from "@/constant";
 import AppButton from "../ui/AppButton";
+import HeroPhoto from "@/public/imgs/hero-photo.png";
+import Image from "next/image";
+
+const topLottieSrc = "/lottie/top.lottie";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -21,10 +26,16 @@ const HeroSection = ({}: HeroSectionProps) => {
   const swapTitleRef = useRef<HTMLSpanElement | null>(null);
   const pageSubtitleRef = useRef<HTMLDivElement | null>(null);
   const pageButtonRef = useRef<HTMLDivElement | null>(null);
-  const heroPhotoRef = useRef<HTMLDivElement | null>(null);
+  const heroPhotoRef = useRef<HTMLImageElement | null>(null);
   const slidesRef = useRef<(HTMLDivElement | null)[]>([]);
   const listRef = useRef<HTMLDivElement | null>(null);
   const vSlideRef = useRef<gsap.core.Timeline | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      void import("@dotlottie/player-component");
+    }
+  }, []);
 
   // GSAP animations
   useGSAP(() => {
@@ -246,14 +257,65 @@ const HeroSection = ({}: HeroSectionProps) => {
               className="flex flex-col lgxl:flex-row justify-stretch items-stretch gap-6 lgxl:gap-8 mt-10 transform-gpu transition-all duration-300 delay-200"
             >
               <AppButton href="/contact-us" variant="filled">
-                Contact us
+                Contact Sales
               </AppButton>
               <AppButton href="/platform/credit" variant="outlined">
                 Learn more
               </AppButton>
             </div>
           </div>
-          <div>sequence wrapper</div>
+          {/* <div>sequence wrapper</div> */}
+        </div>
+
+        {/* Logos */}
+        <div className="flex items-center justify-between mt-27 h-6.5 2xl:max-w-180 2xl:pb-40">
+          {HeroLogo.map((logo, index) => {
+            const { alt, src } = logo;
+            return <Image key={index} src={src} alt={alt} />;
+          })}
+        </div>
+      </div>
+
+      {/* Hero photo and card animations */}
+      <div className="absolute top-0 left-0 w-full h-150">
+        <div className="relative h-full mx-auto my-0 pt-32.5 2xl:w-270">
+          <div className="absolute top-0 right-0 z-999 w-full h-full">
+            {/* Main hero photo */}
+            <div
+              className="absolute z-10
+              w-1/2 xsm:w-1/3 md:w-2/5 lgb:w-[38%] xl:w-1/3 
+              top-[19%] md:top-[25%] lgb:top-[30%] 
+              left-[20%] xsm:left-[30%] md:left-[58%] lgb:left-[50%] xl:left-[53%] 2xl:left-[65%]"
+            >
+              <Image
+                ref={heroPhotoRef}
+                src={HeroPhoto}
+                alt="Hero Photo"
+                className="w-full h-auto object-cover"
+              />
+            </div>
+
+            {/* Desktop view */}
+            <div className="hero-desktop-asset-wrapper">
+              <DesktopGridLess />
+            </div>
+            <div className="hero-desktop-asset-wrapper">
+              <dotlottie-player
+                src={topLottieSrc}
+                autoPlay={true}
+                style={{ height: "100%", width: "100%" }}
+                background="transparent"
+              />
+            </div>
+          </div>
+
+          {/* SVG lines Grid */}
+          <div className="hero-desktop-asset-wrapper" style={{ zIndex: 999 }}>
+            <DesktopGrid />
+          </div>
+          {/* <div className="hero-desktop-asset-wrapper" style={{ zIndex: 99 }}>
+            <MobileGrid />
+          </div> */}
         </div>
       </div>
     </section>
