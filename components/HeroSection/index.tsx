@@ -14,9 +14,11 @@ import HeroPhoto from "@/public/imgs/hero-photo.png";
 import { HeroLogo, textArray } from "./data";
 import { DesktopGrid, DesktopGridLess } from "./DesktopGrid";
 import { HomepageMobileGrid, MobileGrid } from "./MobileGrid";
+import { HeroBackgroundWhite } from "./HeroBackgroundWhite";
 import AppButton from "../ui/AppButton";
 
 const topLottieSrc = "/lottie/top.lottie";
+const heroVideoSrc = "/videos/hero/sequence.mp4";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -266,11 +268,24 @@ const HeroSection = ({}: HeroSectionProps) => {
               </AppButton>
             </div>
           </div>
-          {/* <div>sequence wrapper</div> */}
+          <div className="invisible flex 2xl:flex-none 2xl:basis-180 justify-center will-change-[opacity] transform-gpu transition-opacity duration-500 ease-out z-11">
+            <div className="relative h-123.75 w-107.75 overflow-hidden">
+              <video
+                className="h-full w-full object-cover"
+                src={heroVideoSrc}
+                autoPlay
+                muted
+                // loop
+                playsInline
+                preload="auto"
+              />
+            </div>
+          </div>
         </div>
+        <HeroBackgroundWhite />
 
         {/* Logos */}
-        <div className="flex items-center justify-between mt-27 h-6.5 2xl:max-w-180 2xl:pb-40">
+        <div className="relative flex items-center justify-between mt-27 h-6.5 2xl:max-w-180 2xl:pb-40 z-10">
           {HeroLogo.map((logo, index) => {
             const { alt, src } = logo;
             return <Image key={index} src={src} alt={alt} />;
@@ -279,7 +294,7 @@ const HeroSection = ({}: HeroSectionProps) => {
       </div>
 
       {/* Hero photo and card animations */}
-      <div className="absolute top-0 left-0 w-full h-150">
+      <div className="absolute top-0 left-0 w-full h-150 pointer-events-none">
         <div className="relative h-full mx-auto my-0 pt-32.5 2xl:w-270">
           <div className="absolute top-0 right-0  w-full h-full">
             {/* Main hero photo */}
