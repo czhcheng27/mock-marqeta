@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/all";
 import { useGSAP } from "@gsap/react";
-import { HeroLogo, textArray } from "./data";
-import { DesktopGrid, DesktopGridLess } from "./DesktopGrid";
-import { HomepageMobileGrid, MobileGrid } from "./MobileGrid";
 import {
   LaptopBreakPoint,
   TabletBreakPoint,
   MobileBreakPoint,
 } from "@/constant";
-import AppButton from "../ui/AppButton";
 import HeroPhoto from "@/public/imgs/hero-photo.png";
-import Image from "next/image";
+import { HeroLogo, textArray } from "./data";
+import { DesktopGrid, DesktopGridLess } from "./DesktopGrid";
+import { HomepageMobileGrid, MobileGrid } from "./MobileGrid";
+import AppButton from "../ui/AppButton";
 
 const topLottieSrc = "/lottie/top.lottie";
 
@@ -64,18 +64,11 @@ const HeroSection = ({}: HeroSectionProps) => {
       visibility: "visible",
       delay: 1,
     });
-    gsap.fromTo(
-      ".grid-svg-path",
-      {
-        strokeDashoffset: "-610.244px",
-        strokeDasharray: "0px, 999999px",
-      },
-      {
-        strokeDashoffset: "0px",
-        strokeDasharray: "1200px 0px",
-        duration: 2,
-      },
-    );
+    gsap.to(".grid-svg-path", {
+      strokeDashoffset: "0px",
+      strokeDasharray: "1200px 0px",
+      duration: 2,
+    });
     gsap.to(".IndexHero-logo", {
       opacity: 1,
       visibility: "visible",
@@ -100,24 +93,32 @@ const HeroSection = ({}: HeroSectionProps) => {
         const isDesktop = Boolean(conditions.isDesktop);
         const isLaptop = Boolean(conditions.isLaptop);
         const isTablet = Boolean(conditions.isTablet);
+        const heroPhotoStart = 0;
+        const heroPhotoScrollDistance = isDesktop
+          ? 800
+          : isLaptop
+            ? 760
+            : isTablet
+              ? 600
+              : 500;
         gsap.fromTo(
           heroPhotoRef.current,
           {
-            transform: "translate3d(0px, 0px, 0px) rotate(0deg)",
+            x: 0,
+            y: 0,
+            rotation: 0,
           },
           {
-            transform: "translate3d(100px, -300px, 0px) rotate(15deg)",
-            duration: 1,
+            x: 100,
+            y: -300,
+            rotation: 15,
+            ease: "power1.out",
             scrollTrigger: {
               trigger: heroPhotoRef.current,
-              start: isDesktop
-                ? "top, 25%"
-                : isLaptop
-                  ? "top, 32%"
-                  : isTablet
-                    ? "top, 30%"
-                    : "top, 20%",
-              scrub: 1,
+              start: heroPhotoStart,
+              end: `+=${heroPhotoScrollDistance}`,
+              scrub: true,
+              invalidateOnRefresh: true,
             },
           },
         );
@@ -134,6 +135,7 @@ const HeroSection = ({}: HeroSectionProps) => {
         // -245.393
         strokeDasharray: "0px, 999999px",
         duration: 1,
+        immediateRender: false,
         scrollTrigger: {
           trigger: ".grid-svg-path",
           start: "top, 11.7%",
@@ -211,7 +213,7 @@ const HeroSection = ({}: HeroSectionProps) => {
     <section className="relative bg-[#f5f5f7] overflow-hidden">
       <div className="mx-auto pt-32.5 2xl:w-270">
         <div className="flex justify-between">
-          <div className="flex-none 2xl:basis-135 2xl:max-w-135 z-1000">
+          <div className="flex-none 2xl:basis-135 2xl:max-w-135 ">
             {/* Title and swapping text */}
             <h1
               className="text-[50px] tracking-[-0.62px] font-medium leading-15.25 2xl:mt-5 mb-0 p-0 border-0 align-baseline"
@@ -279,16 +281,16 @@ const HeroSection = ({}: HeroSectionProps) => {
       {/* Hero photo and card animations */}
       <div className="absolute top-0 left-0 w-full h-150">
         <div className="relative h-full mx-auto my-0 pt-32.5 2xl:w-270">
-          <div className="absolute top-0 right-0 z-999 w-full h-full">
+          <div className="absolute top-0 right-0  w-full h-full">
             {/* Main hero photo */}
             <div
+              ref={heroPhotoRef}
               className="absolute z-10
               w-1/2 xsm:w-1/3 md:w-2/5 lgb:w-[38%] xl:w-1/3 
               top-[19%] md:top-[25%] lgb:top-[30%] 
               left-[20%] xsm:left-[30%] md:left-[58%] lgb:left-[50%] xl:left-[53%] 2xl:left-[65%]"
             >
               <Image
-                ref={heroPhotoRef}
                 src={HeroPhoto}
                 alt="Hero Photo"
                 className="w-full h-auto object-cover"
@@ -299,7 +301,7 @@ const HeroSection = ({}: HeroSectionProps) => {
             <div className="hero-desktop-asset-wrapper">
               <DesktopGridLess />
             </div>
-            <div className="hero-desktop-asset-wrapper">
+            <div className="hero-desktop-asset-wrapper z-30">
               <dotlottie-player
                 src={topLottieSrc}
                 autoPlay={true}
@@ -310,7 +312,7 @@ const HeroSection = ({}: HeroSectionProps) => {
           </div>
 
           {/* SVG lines Grid */}
-          <div className="hero-desktop-asset-wrapper" style={{ zIndex: 999 }}>
+          <div className="hero-desktop-asset-wrapper z-20">
             <DesktopGrid />
           </div>
           {/* <div className="hero-desktop-asset-wrapper" style={{ zIndex: 99 }}>
