@@ -1,0 +1,99 @@
+.stage {
+  position: fixed;
+  z-index: 1;
+  display: flex;
+  user-select: none;
+  pointer-events: none;
+  height: 100vh;
+  width: 100%;
+  max-width: 1440px;
+  top: 0;
+  left: 50%;
+  justify-content: flex-end;
+  transform: translate3d(-50%, 0, 0);
+}
+
+.wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+}
+
+.fakeTitle {
+  flex: 0 0 37.5vw;
+  max-width: 37.5vw;
+}
+
+.canvasWrapper {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 50vw;
+  max-width: 50vw;
+}
+
+.card {
+  width: 280px;
+  height: 480px;
+  border-radius: 18px 26px;
+  background: linear-gradient(#5e5ab7, #463ba7);
+  opacity: 0;
+  visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@media (min-width: 1440px) {
+  .wrapper {
+    width: 1080px;
+  }
+
+  .fakeTitle {
+    flex: 0 0 540px;
+    max-width: 540px;
+  }
+
+  .canvasWrapper {
+    flex: 0 0 720px;
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .wrapper {
+    width: 87.5vw;
+  }
+
+  .card {
+    width: 245px;
+    height: 452px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wrapper {
+    width: 83.33333333vw;
+  }
+
+  .fakeTitle {
+    flex: 0 0 41.66666667vw;
+    max-width: 41.66666667vw;
+  }
+
+  .canvasWrapper {
+    flex: 0 0 50vw;
+    max-width: 50vw;
+  }
+
+  .card {
+    width: 184px;
+    height: 339px;
+  }
+}
+
+@media (max-width: 767px) {
+  .stage {
+    display: none;
+  }
+}
