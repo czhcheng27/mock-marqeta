@@ -1,4 +1,5 @@
 import FeaturesBg from "./FeaturesBg";
+import FeaturesSequencesWrapper from "./FeaturesSequencesWrapper";
 import styles from "./index.module.scss";
 
 type Props = {};
@@ -8,8 +9,7 @@ const OverflowWrapper = (props: Props) => {
     <div className={styles.overflowWrapper}>
       <section className={styles.features}>
         <FeaturesBg />
-
-        <div>IndexFeatures-sequences-wrapper isSectionShown</div>
+        <FeaturesSequencesWrapper />
       </section>
       <div className={styles.purpleCard}></div>
       <div className={styles.tailored}></div>
