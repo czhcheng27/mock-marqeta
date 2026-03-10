@@ -28,7 +28,7 @@ const FeaturesBg = () => {
           </p>
         </div>
       </div>
-      <div className={styles.listWrapper}>
+      <div id="index-features-list-wrapper" className={styles.listWrapper}>
         <h2 className={styles.listTitle}>
           <span className={styles.aboutLine}>
             Flexible and scalable technology
