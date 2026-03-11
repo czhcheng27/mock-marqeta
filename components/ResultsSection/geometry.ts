@@ -188,7 +188,7 @@ const WIDTH_CURVE_BOTTOM = Math.max(
 const WIDTH_LOCK_Y =
   WIDTH_CURVE_TOP + (WIDTH_CURVE_BOTTOM - WIDTH_CURVE_TOP) * WIDTH_LOCK_Y_PROGRESS;
 const CENTER_TARGET_DELTA = RESULTS_SCENE_WIDTH - RESULTS_CARD_WIDTH;
-const LOCKED_OPEN_PROGRESS = Math.pow(
+export const LOCKED_OPEN_PROGRESS = Math.pow(
   clamp(
     CENTER_TARGET_DELTA /
     Math.max(
@@ -202,6 +202,10 @@ const LOCKED_OPEN_PROGRESS = Math.pow(
   ),
   1 / PROGRESS_EASE_POWER,
 );
+
+// 裁切场景高度：精确截止到 WIDTH_LOCK_Y——中间列卡片宽度
+// 首次等于场景宽度的 y 坐标，超出部分由 overflow: hidden 隐藏。
+export const RESULTS_CLIPPED_SCENE_HEIGHT = WIDTH_LOCK_Y;
 
 const getEffectiveOpenProgress = (progress: number) =>
   Math.min(clamp(progress, 0, 1), LOCKED_OPEN_PROGRESS);

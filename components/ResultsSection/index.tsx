@@ -7,6 +7,8 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   buildAnimatedResultsCardScene,
+  LOCKED_OPEN_PROGRESS,
+  RESULTS_CLIPPED_SCENE_HEIGHT,
   RESULTS_SCENE_WIDTH,
   type ResultsAnimatedCardLayout,
   type ResultsCardScene,
@@ -22,9 +24,6 @@ import styles from "./index.module.scss";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-// 场景宽高比在滚动过程中不变，所以用 0 进度快照就足够撑住布局。
-const baseScene = buildAnimatedResultsCardScene(0);
-
 // geometry.ts 输出的是场景像素坐标，这里统一转成百分比，方便响应式缩放。
 const toPercent = (value: number, total: number) => `${(value / total) * 100}%`;
 
@@ -33,17 +32,14 @@ type CardStyle = CSSProperties & {
   "--card-content-width": string;
 };
 
-// 动画只占这段滚动比例，后半段继续滚动时卡片保持终态不再变化。
-const ACTIVE_SCROLL_PORTION = 0.68;
-
 const buildCardStyle = (
   card: ResultsAnimatedCardLayout,
   scene: ResultsCardScene,
 ): CardStyle => ({
   left: toPercent(card.left, scene.sceneWidth),
-  top: toPercent(card.top, scene.sceneHeight),
+  top: toPercent(card.top, RESULTS_CLIPPED_SCENE_HEIGHT),
   width: toPercent(card.frameWidth, scene.sceneWidth),
-  height: toPercent(card.height, scene.sceneHeight),
+  height: toPercent(card.height, RESULTS_CLIPPED_SCENE_HEIGHT),
   zIndex: card.zIndex,
   "--card-content-left": toPercent(card.contentLeft, card.frameWidth),
   "--card-content-width": toPercent(card.contentWidth, card.frameWidth),
@@ -59,7 +55,13 @@ const ResultsSection = () => {
     () => {
       const media = gsap.matchMedia();
       const syncProgress = (nextProgress: number) => {
-        const visualProgress = Math.min(nextProgress / ACTIVE_SCROLL_PORTION, 1);
+        // 滚动进度直接用作动画进度；geometry 内部会在
+        // LOCKED_OPEN_PROGRESS 处锁住宽度，这里也做一次
+        // 夹紧，以便滚动一到达锁点就不再触发多余的渲染。
+        const visualProgress = Math.min(
+          Math.max(0, Math.min(1, nextProgress)),
+          LOCKED_OPEN_PROGRESS,
+        );
 
         startTransition(() => {
           setOpenProgress((currentProgress) =>
@@ -112,7 +114,11 @@ const ResultsSection = () => {
   );
 
   return (
-    <section ref={sectionRef} className={styles.section} data-view="IndexResults">
+    <section
+      ref={sectionRef}
+      className={styles.section}
+      data-view="IndexResults"
+    >
       <div className={styles.flex}>
         <div className={styles.wrapper}>
           <div className={styles.titleBlock}>
@@ -156,12 +162,15 @@ const ResultsSection = () => {
         <div
           className={styles.canvasStage}
           style={{
-            // 固定场景宽高比，让整组卡片跟着容器等比缩放。
-            aspectRatio: `${RESULTS_SCENE_WIDTH} / ${baseScene.sceneHeight}`,
+            // 用裁切后的场景高度来限定宽高比，这样组件只会占到
+            // 动画锁定点的高度；超出部分由 overflow: hidden 隐藏。
+            aspectRatio: `${RESULTS_SCENE_WIDTH} / ${RESULTS_CLIPPED_SCENE_HEIGHT}`,
           }}
         >
           {scene.cards.map((card) => {
-            const brandMeta = card.brand ? ResultsCardBrandMeta[card.brand] : null;
+            const brandMeta = card.brand
+              ? ResultsCardBrandMeta[card.brand]
+              : null;
             const purpleGradientId = `results-purple-${card.id}`;
             const purpleGlossId = `results-purple-gloss-${card.id}`;
 
@@ -186,22 +195,50 @@ const ResultsSection = () => {
                 >
                   {card.kind === "purple" ? (
                     <defs>
-                      <linearGradient id={purpleGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <linearGradient
+                        id={purpleGradientId}
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="100%"
+                      >
                         <stop offset="0%" stopColor="#8c82ff" />
                         <stop offset="46%" stopColor="#6258de" />
                         <stop offset="100%" stopColor="#2d236b" />
                       </linearGradient>
-                      <linearGradient id={purpleGlossId} x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.26" />
-                        <stop offset="38%" stopColor="#ffffff" stopOpacity="0" />
-                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
+                      <linearGradient
+                        id={purpleGlossId}
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="100%"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#ffffff"
+                          stopOpacity="0.26"
+                        />
+                        <stop
+                          offset="38%"
+                          stopColor="#ffffff"
+                          stopOpacity="0"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#ffffff"
+                          stopOpacity="0.08"
+                        />
                       </linearGradient>
                     </defs>
                   ) : null}
                   <path
                     className={styles.cardShapePath}
                     d={card.pathD}
-                    fill={card.kind === "purple" ? `url(#${purpleGradientId})` : "#ffffff"}
+                    fill={
+                      card.kind === "purple"
+                        ? `url(#${purpleGradientId})`
+                        : "#ffffff"
+                    }
                   />
                   {card.kind === "purple" ? (
                     <path
