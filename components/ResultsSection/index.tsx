@@ -1,7 +1,15 @@
+"use client";
+
+import { startTransition, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
-  buildResultsCardScene,
+  buildAnimatedResultsCardScene,
   RESULTS_SCENE_WIDTH,
+  type ResultsAnimatedCardLayout,
+  type ResultsCardScene,
 } from "./geometry";
 import {
   IndexResultsCard,
@@ -12,15 +20,99 @@ import {
 } from "./data";
 import styles from "./index.module.scss";
 
-// 静态列阵场景在模块加载时一次性生成；这一版不做滚动驱动动画。
-const staticScene = buildResultsCardScene();
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-// geometry.ts 输出的是像素坐标，这里统一转成相对场景的百分比，方便响应式缩放。
+// 场景宽高比在滚动过程中不变，所以用 0 进度快照就足够撑住布局。
+const baseScene = buildAnimatedResultsCardScene(0);
+
+// geometry.ts 输出的是场景像素坐标，这里统一转成百分比，方便响应式缩放。
 const toPercent = (value: number, total: number) => `${(value / total) * 100}%`;
 
+type CardStyle = CSSProperties & {
+  "--card-content-left": string;
+  "--card-content-width": string;
+};
+
+// 动画只占这段滚动比例，后半段继续滚动时卡片保持终态不再变化。
+const ACTIVE_SCROLL_PORTION = 0.68;
+
+const buildCardStyle = (
+  card: ResultsAnimatedCardLayout,
+  scene: ResultsCardScene,
+): CardStyle => ({
+  left: toPercent(card.left, scene.sceneWidth),
+  top: toPercent(card.top, scene.sceneHeight),
+  width: toPercent(card.frameWidth, scene.sceneWidth),
+  height: toPercent(card.height, scene.sceneHeight),
+  zIndex: card.zIndex,
+  "--card-content-left": toPercent(card.contentLeft, card.frameWidth),
+  "--card-content-width": toPercent(card.contentWidth, card.frameWidth),
+});
+
 const ResultsSection = () => {
+  const [openProgress, setOpenProgress] = useState(0);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const jpmCardRef = useRef<HTMLDivElement | null>(null);
+  const scene = buildAnimatedResultsCardScene(openProgress);
+
+  useGSAP(
+    () => {
+      const media = gsap.matchMedia();
+      const syncProgress = (nextProgress: number) => {
+        const visualProgress = Math.min(nextProgress / ACTIVE_SCROLL_PORTION, 1);
+
+        startTransition(() => {
+          setOpenProgress((currentProgress) =>
+            Math.abs(currentProgress - visualProgress) < 0.001
+              ? currentProgress
+              : visualProgress,
+          );
+        });
+      };
+
+      media.add("(min-width: 1024px)", () => {
+        const section = sectionRef.current;
+        const jpmCard = jpmCardRef.current;
+
+        if (!section || !jpmCard) {
+          return undefined;
+        }
+
+        syncProgress(0);
+
+        const scrollTrigger = ScrollTrigger.create({
+          trigger: jpmCard,
+          start: "top top",
+          endTrigger: section,
+          end: "bottom bottom",
+          scrub: true,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => syncProgress(self.progress),
+          onRefresh: (self) => syncProgress(self.progress),
+        });
+
+        requestAnimationFrame(() => ScrollTrigger.refresh());
+
+        return () => {
+          scrollTrigger.kill();
+          syncProgress(0);
+        };
+      });
+
+      media.add("(max-width: 1023px)", () => {
+        syncProgress(0);
+      });
+
+      return () => {
+        media.revert();
+        syncProgress(0);
+      };
+    },
+    { scope: sectionRef },
+  );
+
   return (
-    <section className={styles.section} data-view="IndexResults">
+    <section ref={sectionRef} className={styles.section} data-view="IndexResults">
       <div className={styles.flex}>
         <div className={styles.wrapper}>
           <div className={styles.titleBlock}>
@@ -64,55 +156,90 @@ const ResultsSection = () => {
         <div
           className={styles.canvasStage}
           style={{
-            // 固定场景宽高比，让绝对定位卡片随容器等比缩放。
-            aspectRatio: `${RESULTS_SCENE_WIDTH} / ${staticScene.sceneHeight}`,
+            // 固定场景宽高比，让整组卡片跟着容器等比缩放。
+            aspectRatio: `${RESULTS_SCENE_WIDTH} / ${baseScene.sceneHeight}`,
           }}
         >
-          {staticScene.cards.map((card) => {
-            // 只有品牌卡才需要取 logo 资源；purple / blank 卡没有 logo。
+          {scene.cards.map((card) => {
             const brandMeta = card.brand ? ResultsCardBrandMeta[card.brand] : null;
+            const purpleGradientId = `results-purple-${card.id}`;
+            const purpleGlossId = `results-purple-gloss-${card.id}`;
 
             return (
               <div
                 key={card.id}
+                ref={(node) => {
+                  if (card.brand === "jpm") {
+                    jpmCardRef.current = node;
+                  }
+                }}
                 className={styles.stackCard}
                 data-kind={card.kind}
                 data-brand={card.brand}
-                style={{
-                  left: toPercent(card.left, staticScene.sceneWidth),
-                  top: toPercent(card.top, staticScene.sceneHeight),
-                  width: toPercent(card.width, staticScene.sceneWidth),
-                  height: toPercent(card.height, staticScene.sceneHeight),
-                  zIndex: card.zIndex,
-                }}
+                data-column={card.columnIndex + 1}
+                style={buildCardStyle(card, scene)}
               >
-                {/* 第二列第一张紫卡保留一个简化的内部占位结构。 */}
-                {card.kind === "purple" ? (
-                  <div className={styles.purpleCardInner}>
-                    <span className={styles.purpleBadge}>marqeta</span>
-                    <span className={styles.purpleChip} />
-                    <span className={styles.purpleLineShort} />
-                    <span className={styles.purpleLineLong} />
-                  </div>
-                ) : null}
-
-                {/* 品牌卡只渲染顶部 logo，空白卡不放任何内容。 */}
-                {card.kind === "brand" && brandMeta ? (
-                  <span className={styles.cardLogoAsset}>
-                    <Image
-                      src={brandMeta.logoSrc}
-                      alt=""
-                      fill
-                      unoptimized
-                      sizes="12vw"
+                <svg
+                  className={styles.cardShape}
+                  viewBox={`0 0 ${card.frameWidth} ${card.height}`}
+                  preserveAspectRatio="none"
+                >
+                  {card.kind === "purple" ? (
+                    <defs>
+                      <linearGradient id={purpleGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#8c82ff" />
+                        <stop offset="46%" stopColor="#6258de" />
+                        <stop offset="100%" stopColor="#2d236b" />
+                      </linearGradient>
+                      <linearGradient id={purpleGlossId} x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.26" />
+                        <stop offset="38%" stopColor="#ffffff" stopOpacity="0" />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
+                      </linearGradient>
+                    </defs>
+                  ) : null}
+                  <path
+                    className={styles.cardShapePath}
+                    d={card.pathD}
+                    fill={card.kind === "purple" ? `url(#${purpleGradientId})` : "#ffffff"}
+                  />
+                  {card.kind === "purple" ? (
+                    <path
+                      className={styles.cardShapeGloss}
+                      d={card.pathD}
+                      fill={`url(#${purpleGlossId})`}
                     />
-                  </span>
+                  ) : null}
+                </svg>
+
+                {card.kind !== "blank" ? (
+                  <div className={styles.cardContentFrame}>
+                    {card.kind === "purple" ? (
+                      <div className={styles.purpleCardInner}>
+                        <span className={styles.purpleBadge}>marqeta</span>
+                        <span className={styles.purpleChip} />
+                        <span className={styles.purpleLineShort} />
+                        <span className={styles.purpleLineLong} />
+                      </div>
+                    ) : null}
+
+                    {card.kind === "brand" && brandMeta ? (
+                      <span className={styles.cardLogoAsset}>
+                        <Image
+                          src={brandMeta.logoSrc}
+                          alt=""
+                          fill
+                          unoptimized
+                          sizes="12vw"
+                        />
+                      </span>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             );
           })}
 
-          {/* 移动端不复用桌面的完整列阵，只保留一个简化后的顶部卡序占位。 */}
           {IndexResultsCard.map((column, index) => (
             <div
               key={`mobile-${index}`}
