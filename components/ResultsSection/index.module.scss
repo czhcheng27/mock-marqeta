@@ -1,0 +1,521 @@
+.section {
+  overflow: clip;
+  padding-top: 1px;
+  background: linear-gradient(
+    180deg,
+    #2a206a 0%,
+    #2a206a 38%,
+    #443794 70%,
+    #443794 100%
+  );
+}
+
+.flex {
+  display: flex;
+  max-width: 1280px;
+  margin: 0 auto;
+  font-family: "Graphik", Arial, Helvetica, sans-serif;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 2;
+  width: 630px;
+  max-width: 630px;
+  margin-top: 173px;
+  margin-left: auto;
+  margin-right: 180px;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.title {
+  width: 450px;
+  margin: 0;
+  color: #ffffff;
+  font-size: 40px;
+  line-height: 54px;
+  font-weight: 400;
+  letter-spacing: -0.7px;
+  text-align: right;
+}
+
+.titleWord {
+  display: inline-block;
+  white-space: pre;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 86px;
+}
+
+.cardsCount {
+  display: flex;
+  justify-content: flex-end;
+  color: #1cc283;
+  font-size: 78px;
+  line-height: 80px;
+  font-weight: 300;
+  letter-spacing: -3.48px;
+}
+
+.cardsCountToken {
+  display: inline-block;
+}
+
+.cardsText {
+  margin-top: 13px;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 26px;
+  text-align: right;
+}
+
+.facts {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 72px;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 1 1 0;
+}
+
+.factTitle {
+  color: #1cc283;
+  font-size: 40px;
+  line-height: 60px;
+  letter-spacing: -1.39px;
+  text-align: right;
+}
+
+.factDescription {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 26px;
+  text-align: right;
+}
+
+.canvas {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  margin-top: -520px;
+  margin-left: calc(50% - 50vw);
+  pointer-events: none;
+}
+
+.canvasStage {
+  position: relative;
+  width: 100%;
+}
+
+.stackCard {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow:
+    0 30px 84px rgba(19, 15, 51, 0.18),
+    0 2px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+.stackCard[data-kind="purple"] {
+  background: linear-gradient(160deg, #8c82ff 0%, #6258de 46%, #2d236b 100%);
+  box-shadow:
+    0 44px 104px rgba(19, 15, 51, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.stackCard[data-kind="purple"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0) 36%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+}
+
+.purpleCardInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8.5% 8.5% 10%;
+}
+
+.purpleBadge,
+.purpleChip,
+.purpleLineShort,
+.purpleLineLong {
+  position: relative;
+  z-index: 1;
+}
+
+.purpleBadge {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(0.55rem, 0.75vw, 0.72rem);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.purpleChip {
+  width: 24%;
+  height: 11%;
+  margin-top: 17%;
+  border-radius: 10px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.28)
+  );
+}
+
+.purpleLineShort,
+.purpleLineLong {
+  height: 3.1%;
+  border-radius: 999px;
+}
+
+.purpleLineShort {
+  width: 42%;
+  margin-top: 18%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.purpleLineLong {
+  width: 68%;
+  margin-top: 5%;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.cardLogoAsset {
+  position: absolute;
+  top: 13%;
+  left: 50%;
+  width: 60%;
+  height: 14%;
+  transform: translateX(-50%);
+}
+
+.cardLogoAsset :global(img) {
+  object-fit: contain;
+  user-select: none;
+}
+
+.stackCard[data-brand="uber"] .cardLogoAsset {
+  width: 51%;
+}
+
+.stackCard[data-brand="square"] .cardLogoAsset {
+  width: 39%;
+}
+
+.stackCard[data-brand="instacart"] .cardLogoAsset {
+  width: 60%;
+}
+
+.stackCard[data-brand="jpm"] .cardLogoAsset {
+  width: 58%;
+}
+
+.stackCard[data-brand="doordash"] .cardLogoAsset {
+  width: 71%;
+}
+
+.mobileCardColumn,
+.mobilePurpleCard {
+  display: none;
+}
+
+@media (min-width: 1440px) {
+  .wrapper {
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .wrapper {
+    width: 43.75vw;
+    max-width: none;
+    margin-right: 12.5vw;
+  }
+
+  .title {
+    width: 31.25vw;
+  }
+
+  .cards {
+    margin-top: 56px;
+  }
+
+  .cardsCount {
+    font-size: 69px;
+    line-height: 1;
+  }
+
+  .facts {
+    margin-top: 56px;
+  }
+
+  .canvas {
+    margin-top: -430px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wrapper {
+    width: 58.33333333vw;
+    max-width: none;
+    margin-top: 128px;
+    margin-right: 8.33333333vw;
+  }
+
+  .title {
+    width: 50vw;
+    font-size: 30px;
+    line-height: 40px;
+    letter-spacing: -0.52px;
+  }
+
+  .cards {
+    margin-top: 50px;
+  }
+
+  .cardsCount {
+    font-size: 55px;
+    line-height: 1;
+    letter-spacing: -2.23px;
+  }
+
+  .cardsText {
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  .facts {
+    flex-wrap: wrap;
+    margin-top: 46px;
+  }
+
+  .fact {
+    flex: 0 0 calc(50% - 12px);
+  }
+
+  .fact:last-child {
+    flex-basis: 100%;
+    margin-top: 12px;
+  }
+
+  .factTitle {
+    font-size: 30px;
+    line-height: 40px;
+  }
+
+  .canvas {
+    margin-top: -220px;
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding-top: 60px;
+    background: linear-gradient(180deg, #332878 0%, #443794 20%, #443794 100%);
+  }
+
+  .flex {
+    display: block;
+  }
+
+  .wrapper {
+    width: auto;
+    max-width: none;
+    margin: 0 24px;
+  }
+
+  .titleBlock {
+    align-items: center;
+  }
+
+  .title {
+    width: 100%;
+    font-size: 26px;
+    line-height: 34px;
+    letter-spacing: -0.47px;
+    text-align: center;
+  }
+
+  .cards {
+    align-items: center;
+    margin-top: 40px;
+  }
+
+  .cardsCount {
+    font-size: 38px;
+    line-height: 1;
+    letter-spacing: -1.65px;
+  }
+
+  .cardsText {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 26px;
+    text-align: center;
+  }
+
+  .facts {
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 31px;
+    gap: 25px 0;
+  }
+
+  .fact {
+    flex: 0 0 50%;
+    align-items: center;
+  }
+
+  .fact:last-child {
+    flex-basis: 100%;
+  }
+
+  .factTitle {
+    font-size: 26px;
+    line-height: 30px;
+    text-align: center;
+  }
+
+  .factDescription {
+    text-align: center;
+  }
+
+  .canvas {
+    width: 100%;
+    margin-top: 66.5625vw;
+    margin-left: 0;
+  }
+
+  .canvasStage {
+    width: min(calc(100% - 32px), 360px);
+    aspect-ratio: 1 / 1.08 !important;
+  }
+
+  .stackCard {
+    display: none;
+  }
+
+  .mobileCardColumn,
+  .mobilePurpleCard {
+    position: absolute;
+    display: block;
+    width: 22%;
+    aspect-ratio: 1 / 2;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 22px 56px rgba(19, 15, 51, 0.18);
+  }
+
+  .mobileCardColumn[data-column="1"] {
+    top: 8%;
+    left: 2%;
+  }
+
+  .mobileCardColumn[data-column="2"] {
+    top: 20%;
+    left: 23%;
+  }
+
+  .mobileCardColumn[data-column="3"] {
+    top: 34%;
+    left: 44%;
+  }
+
+  .mobileCardColumn[data-column="4"] {
+    top: 48%;
+    left: 65%;
+  }
+
+  .mobileCardColumn[data-column="5"] {
+    top: 62%;
+    left: 76%;
+  }
+
+  .mobileCardLogo {
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    width: 58%;
+    height: 14%;
+    transform: translateX(-50%);
+  }
+
+  .mobileCardLogo :global(img) {
+    object-fit: contain;
+  }
+
+  .mobilePurpleCard {
+    top: 16%;
+    left: 22%;
+    width: 22%;
+    aspect-ratio: 1 / 2;
+    border-radius: 10px;
+    background: linear-gradient(162deg, #8c82ff 0%, #6056db 48%, #2d236b 100%);
+    box-shadow: 0 24px 72px rgba(19, 15, 51, 0.28);
+  }
+
+  .mobilePurpleCardInner {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(
+        150deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0) 46%
+      ),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  }
+
+  .mobilePurpleCard::before {
+    content: "";
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    width: 46%;
+    height: 6%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.36);
+    transform: translateX(-50%);
+  }
+
+  .mobilePurpleCard::after {
+    content: "";
+    position: absolute;
+    top: 23%;
+    left: 12%;
+    width: 22%;
+    height: 9%;
+    border-radius: 8px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.9),
+      rgba(255, 255, 255, 0.32)
+    );
+  }
+}
