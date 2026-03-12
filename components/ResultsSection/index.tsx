@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useRef, useState, type CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -24,6 +24,11 @@ import styles from "./index.module.scss";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
+// 0 进度快照作为桌面端静态初始场景，给 overlay 和 trigger 锚点复用。
+const baseScene = buildAnimatedResultsCardScene(0);
+const desktopOverlayCards = baseScene.cards.filter((card) => card.kind !== "blank");
+const jpmTriggerCard = desktopOverlayCards.find((card) => card.brand === "jpm");
+
 // geometry.ts 输出的是场景像素坐标，这里统一转成百分比，方便响应式缩放。
 const toPercent = (value: number, total: number) => `${(value / total) * 100}%`;
 
@@ -45,42 +50,157 @@ const buildCardStyle = (
   "--card-content-width": toPercent(card.contentWidth, card.frameWidth),
 });
 
+const applyCardStyle = (
+  element: HTMLDivElement,
+  card: ResultsAnimatedCardLayout,
+  scene: ResultsCardScene,
+) => {
+  element.style.left = toPercent(card.left, scene.sceneWidth);
+  element.style.top = toPercent(card.top, RESULTS_CLIPPED_SCENE_HEIGHT);
+  element.style.width = toPercent(card.frameWidth, scene.sceneWidth);
+  element.style.height = toPercent(card.height, RESULTS_CLIPPED_SCENE_HEIGHT);
+  element.style.zIndex = String(card.zIndex);
+  element.style.setProperty(
+    "--card-content-left",
+    toPercent(card.contentLeft, card.frameWidth),
+  );
+  element.style.setProperty(
+    "--card-content-width",
+    toPercent(card.contentWidth, card.frameWidth),
+  );
+};
+
+const clampOpenProgress = (progress: number) =>
+  Math.min(Math.max(0, Math.min(1, progress)), LOCKED_OPEN_PROGRESS);
+
+const drawWhiteCards = (
+  canvas: HTMLCanvasElement,
+  stage: HTMLDivElement,
+  scene: ResultsCardScene,
+) => {
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return;
+  }
+
+  const stageWidth = stage.clientWidth;
+  const stageHeight = stage.clientHeight;
+
+  if (stageWidth <= 0 || stageHeight <= 0) {
+    return;
+  }
+
+  const dpr = window.devicePixelRatio || 1;
+  const canvasWidth = Math.max(1, Math.round(stageWidth * dpr));
+  const canvasHeight = Math.max(1, Math.round(stageHeight * dpr));
+
+  if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+  }
+
+  const scaleX = stageWidth / scene.sceneWidth;
+  const scaleY = stageHeight / RESULTS_CLIPPED_SCENE_HEIGHT;
+  const whiteCards = scene.cards.filter((card) => card.kind !== "purple");
+
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.clearRect(0, 0, stageWidth, stageHeight);
+  context.imageSmoothingEnabled = true;
+
+  whiteCards.forEach((card) => {
+    const path = new Path2D(card.pathD);
+
+    context.save();
+    context.translate(card.left * scaleX, card.top * scaleY);
+    context.scale(scaleX, scaleY);
+    context.shadowColor = "rgba(19, 15, 51, 0.18)";
+    context.shadowBlur = 38;
+    context.shadowOffsetY = 14;
+    context.fillStyle = "#ffffff";
+    context.fill(path);
+    context.shadowColor = "transparent";
+    context.shadowBlur = 0;
+    context.shadowOffsetY = 0;
+    context.lineWidth = 1.4;
+    context.strokeStyle = "rgba(255, 255, 255, 0.72)";
+    context.stroke(path);
+    context.restore();
+  });
+};
+
 const ResultsSection = () => {
-  const [openProgress, setOpenProgress] = useState(0);
   const sectionRef = useRef<HTMLElement | null>(null);
-  const jpmCardRef = useRef<HTMLDivElement | null>(null);
-  const scene = buildAnimatedResultsCardScene(openProgress);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const jpmTriggerRef = useRef<HTMLDivElement | null>(null);
+  const overlayRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const purpleSvgRef = useRef<SVGSVGElement | null>(null);
+  const purplePathRef = useRef<SVGPathElement | null>(null);
+  const purpleGlossPathRef = useRef<SVGPathElement | null>(null);
 
   useGSAP(
     () => {
       const media = gsap.matchMedia();
-      const syncProgress = (nextProgress: number) => {
-        // 滚动进度直接用作动画进度；geometry 内部会在
-        // LOCKED_OPEN_PROGRESS 处锁住宽度，这里也做一次
-        // 夹紧，以便滚动一到达锁点就不再触发多余的渲染。
-        const visualProgress = Math.min(
-          Math.max(0, Math.min(1, nextProgress)),
-          LOCKED_OPEN_PROGRESS,
-        );
+      let frameId: number | null = null;
+      let pendingProgress = 0;
 
-        startTransition(() => {
-          setOpenProgress((currentProgress) =>
-            Math.abs(currentProgress - visualProgress) < 0.001
-              ? currentProgress
-              : visualProgress,
-          );
+      const renderScene = (progress: number) => {
+        const stage = stageRef.current;
+        const canvas = canvasRef.current;
+
+        if (!stage || !canvas) {
+          return;
+        }
+
+        const scene = buildAnimatedResultsCardScene(progress);
+
+        drawWhiteCards(canvas, stage, scene);
+
+        scene.cards.forEach((card) => {
+          if (card.kind === "blank") {
+            return;
+          }
+
+          const overlay = overlayRefs.current[card.id];
+
+          if (overlay) {
+            applyCardStyle(overlay, card, scene);
+          }
+
+          if (card.kind === "purple") {
+            purpleSvgRef.current?.setAttribute(
+              "viewBox",
+              `0 0 ${card.frameWidth} ${card.height}`,
+            );
+            purplePathRef.current?.setAttribute("d", card.pathD);
+            purpleGlossPathRef.current?.setAttribute("d", card.pathD);
+          }
+        });
+      };
+
+      const scheduleScene = (nextProgress: number) => {
+        pendingProgress = clampOpenProgress(nextProgress);
+
+        if (frameId !== null) {
+          return;
+        }
+
+        frameId = window.requestAnimationFrame(() => {
+          frameId = null;
+          renderScene(pendingProgress);
         });
       };
 
       media.add("(min-width: 1024px)", () => {
         const section = sectionRef.current;
-        const jpmCard = jpmCardRef.current;
+        const jpmCard = jpmTriggerRef.current;
 
         if (!section || !jpmCard) {
           return undefined;
         }
 
-        syncProgress(0);
+        renderScene(0);
 
         const scrollTrigger = ScrollTrigger.create({
           trigger: jpmCard,
@@ -89,25 +209,37 @@ const ResultsSection = () => {
           end: "bottom bottom",
           scrub: true,
           invalidateOnRefresh: true,
-          onUpdate: (self) => syncProgress(self.progress),
-          onRefresh: (self) => syncProgress(self.progress),
+          onUpdate: (self) => scheduleScene(self.progress),
+          onRefresh: (self) => scheduleScene(self.progress),
         });
 
         requestAnimationFrame(() => ScrollTrigger.refresh());
 
         return () => {
           scrollTrigger.kill();
-          syncProgress(0);
+
+          if (frameId !== null) {
+            window.cancelAnimationFrame(frameId);
+            frameId = null;
+          }
+
+          renderScene(0);
         };
       });
 
       media.add("(max-width: 1023px)", () => {
-        syncProgress(0);
+        renderScene(0);
       });
 
       return () => {
         media.revert();
-        syncProgress(0);
+
+        if (frameId !== null) {
+          window.cancelAnimationFrame(frameId);
+          frameId = null;
+        }
+
+        renderScene(0);
       };
     },
     { scope: sectionRef },
@@ -160,6 +292,7 @@ const ResultsSection = () => {
 
       <div className={styles.canvas} aria-hidden="true">
         <div
+          ref={stageRef}
           className={styles.canvasStage}
           style={{
             // 用裁切后的场景高度来限定宽高比，这样组件只会占到
@@ -167,7 +300,23 @@ const ResultsSection = () => {
             aspectRatio: `${RESULTS_SCENE_WIDTH} / ${RESULTS_CLIPPED_SCENE_HEIGHT}`,
           }}
         >
-          {scene.cards.map((card) => {
+          <canvas ref={canvasRef} className={styles.desktopCanvas} />
+
+          {jpmTriggerCard ? (
+            <div
+              ref={jpmTriggerRef}
+              className={styles.sceneAnchor}
+              style={{
+                left: toPercent(jpmTriggerCard.left, baseScene.sceneWidth),
+                top: toPercent(
+                  jpmTriggerCard.top,
+                  RESULTS_CLIPPED_SCENE_HEIGHT,
+                ),
+              }}
+            />
+          ) : null}
+
+          {desktopOverlayCards.map((card) => {
             const brandMeta = card.brand
               ? ResultsCardBrandMeta[card.brand]
               : null;
@@ -178,22 +327,21 @@ const ResultsSection = () => {
               <div
                 key={card.id}
                 ref={(node) => {
-                  if (card.brand === "jpm") {
-                    jpmCardRef.current = node;
-                  }
+                  overlayRefs.current[card.id] = node;
                 }}
                 className={styles.stackCard}
                 data-kind={card.kind}
                 data-brand={card.brand}
                 data-column={card.columnIndex + 1}
-                style={buildCardStyle(card, scene)}
+                style={buildCardStyle(card, baseScene)}
               >
-                <svg
-                  className={styles.cardShape}
-                  viewBox={`0 0 ${card.frameWidth} ${card.height}`}
-                  preserveAspectRatio="none"
-                >
-                  {card.kind === "purple" ? (
+                {card.kind === "purple" ? (
+                  <svg
+                    ref={purpleSvgRef}
+                    className={styles.cardShape}
+                    viewBox={`0 0 ${card.frameWidth} ${card.height}`}
+                    preserveAspectRatio="none"
+                  >
                     <defs>
                       <linearGradient
                         id={purpleGradientId}
@@ -230,49 +378,43 @@ const ResultsSection = () => {
                         />
                       </linearGradient>
                     </defs>
-                  ) : null}
-                  <path
-                    className={styles.cardShapePath}
-                    d={card.pathD}
-                    fill={
-                      card.kind === "purple"
-                        ? `url(#${purpleGradientId})`
-                        : "#ffffff"
-                    }
-                  />
-                  {card.kind === "purple" ? (
                     <path
+                      ref={purplePathRef}
+                      className={styles.cardShapePath}
+                      d={card.pathD}
+                      fill={`url(#${purpleGradientId})`}
+                    />
+                    <path
+                      ref={purpleGlossPathRef}
                       className={styles.cardShapeGloss}
                       d={card.pathD}
                       fill={`url(#${purpleGlossId})`}
                     />
-                  ) : null}
-                </svg>
-
-                {card.kind !== "blank" ? (
-                  <div className={styles.cardContentFrame}>
-                    {card.kind === "purple" ? (
-                      <div className={styles.purpleCardInner}>
-                        <span className={styles.purpleBadge}>marqeta</span>
-                        <span className={styles.purpleChip} />
-                        <span className={styles.purpleLineShort} />
-                        <span className={styles.purpleLineLong} />
-                      </div>
-                    ) : null}
-
-                    {card.kind === "brand" && brandMeta ? (
-                      <span className={styles.cardLogoAsset}>
-                        <Image
-                          src={brandMeta.logoSrc}
-                          alt=""
-                          fill
-                          unoptimized
-                          sizes="12vw"
-                        />
-                      </span>
-                    ) : null}
-                  </div>
+                  </svg>
                 ) : null}
+
+                <div className={styles.cardContentFrame}>
+                  {card.kind === "purple" ? (
+                    <div className={styles.purpleCardInner}>
+                      <span className={styles.purpleBadge}>marqeta</span>
+                      <span className={styles.purpleChip} />
+                      <span className={styles.purpleLineShort} />
+                      <span className={styles.purpleLineLong} />
+                    </div>
+                  ) : null}
+
+                  {card.kind === "brand" && brandMeta ? (
+                    <span className={styles.cardLogoAsset}>
+                      <Image
+                        src={brandMeta.logoSrc}
+                        alt=""
+                        fill
+                        unoptimized
+                        sizes="12vw"
+                      />
+                    </span>
+                  ) : null}
+                </div>
               </div>
             );
           })}
