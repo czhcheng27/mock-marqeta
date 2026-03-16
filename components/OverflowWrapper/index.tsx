@@ -10,6 +10,9 @@ import styles from "./index.module.scss";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
+const PURPLE_CARD_SCROLL_START = "top bottom";
+const PURPLE_CARD_SCROLL_END = "+=80%";
+
 const OverflowWrapper = () => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const purpleCardRef = useRef<HTMLDivElement | null>(null);
@@ -41,8 +44,8 @@ const OverflowWrapper = () => {
             ease: "none",
             scrollTrigger: {
               trigger,
-              start: "top 90%",
-              end: "+=320%",
+              start: PURPLE_CARD_SCROLL_START,
+              end: PURPLE_CARD_SCROLL_END,
               scrub: 0.1,
               invalidateOnRefresh: true,
             },
@@ -59,8 +62,8 @@ const OverflowWrapper = () => {
             ease: "none",
             scrollTrigger: {
               trigger,
-              start: "top 90%",
-              end: "+=320%",
+              start: PURPLE_CARD_SCROLL_START,
+              end: PURPLE_CARD_SCROLL_END,
               scrub: 0.1,
               invalidateOnRefresh: true,
             },
@@ -94,6 +97,7 @@ const OverflowWrapper = () => {
         <FeaturesBg />
         <FeaturesSequencesWrapper />
       </section>
+
       <div className={styles.purpleCard} aria-hidden="true">
         <div ref={purpleCardRef} className={styles.purpleCardCard}>
           <div
@@ -106,7 +110,9 @@ const OverflowWrapper = () => {
         </div>
         <div ref={purpleCardTriggerRef} className={styles.purpleCardTrigger} />
       </div>
-      <div className={styles.tailored}></div>
+      <div className={styles.tailored} id="tailored">
+        <div className="h-5000 bg-[transparent]"></div>
+      </div>
     </div>
   );
 };

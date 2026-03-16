@@ -121,8 +121,8 @@ export default function HeroCard() {
           // 第二段：从 features 标题区域开始，到 overflow 区域底部贴住视口底部结束。
           trigger: "#index-features-list-wrapper",
           start: "top 10%",
-          endTrigger: "#overflow-wrapper",
-          end: "bottom bottom",
+          endTrigger: "#tailored",
+          end: "top bottom",
           scrub: 0.1,
           invalidateOnRefresh: true,
         },
